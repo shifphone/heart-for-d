@@ -149,6 +149,13 @@
   #letter.open .fx { animation: rise 0.7s ease both; animation-delay: var(--d); }
   #letter.open .snap { animation: drop 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--d); }
 
+  #diag {
+    position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; white-space: pre-wrap;
+    background: #2a0b1c; color: #ffd6e6; border: 1px solid #ff4f93; border-radius: 10px;
+    padding: 10px 12px; font: 600 12px/1.4 var(--font-word);
+    -webkit-user-select: text; user-select: text;
+  }
   @keyframes beat {
     0%, 100% { transform: scale(1); }
     14% { transform: scale(1.16); }
@@ -220,6 +227,20 @@
   </div>
 </div>
 
+<div id="diag" hidden></div>
+<script>
+  // Shows any script error right on the screen, so a broken phone browser is visible instead of silent
+  (function () {
+    function show(msg) {
+      var d = document.getElementById("diag");
+      if (!d) return;
+      d.hidden = false;
+      d.textContent += (d.textContent ? "\n" : "") + "Ошибка: " + msg;
+    }
+    window.addEventListener("error", function (e) { show((e.message || "?") + " @" + (e.lineno || "?") + ":" + (e.colno || "?")); });
+    window.addEventListener("unhandledrejection", function (e) { show("promise: " + (e.reason && e.reason.message || e.reason)); });
+  })();
+</script>
 <script>
   // ===== Edit these =====
   const CONFIG = {
@@ -547,13 +568,16 @@
     ctx.globalAlpha = 1;
   }
 
-  startBtn.addEventListener("click", () => {
+  function onStart(e) {
+    if (e && e.type === "touchend") e.preventDefault();
     if (started) return;
     started = true;
     startBtn.classList.add("gone");
     startBtn.setAttribute("tabindex", "-1");
     if (audio) { try { audio.currentTime = 0; audio.play().catch(() => {}); } catch (e) {} }
-  });
+  }
+  startBtn.addEventListener("click", onStart);
+  startBtn.addEventListener("touchend", onStart, { passive: false });
 
   canvas.addEventListener("pointerdown", (e) => {
     if (!started) return;
